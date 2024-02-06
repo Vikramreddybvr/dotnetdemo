@@ -1,22 +1,29 @@
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
-WORKDIR /app
+trigger:
+- main
 
-RUN apt-get update
-RUN curl -sL https://deb.nodesource.com/setup_16.x  | bash -
-RUN apt-get -y install nodejs
+pool:
+  vmImage: 'Ubuntu-latest'
 
-COPY . ./
-RUN dotnet restore
+steps:
+- task: UseDotNet@2
+  displayName: 'Install .NET Core SDK'
+  inputs:
+    version: 8.x
+    performMultiLevelLookup: true
+    includePreviewVersions: true # Required for preview versions
 
-RUN dotnet build "dotnet6.csproj" -c Release
+variables:
+  buildConfiguration: 'Release'
 
-RUN dotnet publish "dotnet6.csproj" -c Release -o publish
+steps:
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'restore'
+    feedsToUse: 'select'
+    vstsFeed: 'my-vsts-feed' # A series of numbers and letters
 
-
-FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
-
-COPY --from=build /app/publish .
-ENV ASPNETCORE_URLS http://*:5000
-
-EXPOSE 5000
-ENTRYPOINT ["dotnet", "dotnet6.dll"]
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'build'
+    arguments: '--configuration $(buildConfiguration)'
+  displayName: 'dotnet build $(buildConfiguration)'
