@@ -2,7 +2,7 @@ trigger:
 - main
 
 pool:
-  vmImage: 'Ubuntu-latest'
+  vmImage: 'windows-latest'
 
 steps:
 - task: UseDotNet@2
